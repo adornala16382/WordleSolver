@@ -82,6 +82,7 @@ class WordleSolver:
         self.guess = self.e1.get()
         if(len(self.guess)==5):
             self.guess_count += 1
+            self.computerMode()
             self.typeWord()
         self.e1.delete(0,tk.END)
 
@@ -94,56 +95,14 @@ class WordleSolver:
                 self.guess_count+= 1
 
                 if(self.is_on == True):
-                    for i, char in enumerate(self.guess):
-                        if(self.currentWord[i][1] %3 == 2):
-                            print("green")
-                            self.correctSpots.append((char,i))
-                            for k, word in enumerate(self.allowedGuesses):
-                                if(word[i] != char):
-                                    self.deleteList.append(k)
-                        elif(self.currentWord[i][1] %3 == 1):
-                            print("yellow")
-                            self.wrongSpots.append((char,i))
-                            for j, word in enumerate(self.allowedGuesses):
-                                if(char not in word or (char in word and word[i]==char)):
-                                    self.deleteList.append(j)
-                        else:
-                            print("white")
-                            for j, word in enumerate(self.allowedGuesses):
-                                if(char in word):
-                                    self.deleteList.append(j)
-                    self.deleteWords()
-                    num = self.predict()
-                    self.guess = self.allowedGuesses[num]
-                    self.deleteList.append(num)
+                    self.assistMode()
                 else:
-                    num = self.predict()
-                    self.guess = self.allowedGuesses[num]
-                    self.deleteList.append(num)
-                    for i, char in enumerate(self.guess):
-                        if(char in self.answer):
-                            if(char == self.answer[i]):
-                                self.correctSpots.append((char,i))
-                                for k, word in enumerate(self.allowedGuesses):
-                                    if(word[i] != char):
-                                        self.deleteList.append(k)
-                            else:
-                                self.wrongSpots.append((char,i))
-                                for j, word in enumerate(self.allowedGuesses):
-                                    if(char not in word or (char in word and word[i]==char)):
-                                        self.deleteList.append(j)
-                        else:
-                            for j, word in enumerate(self.allowedGuesses):
-                                if(char in word):
-                                    self.deleteList.append(j)
-                    self.deleteWords()
+                    self.computerMode()
 
                 if(self.guess_count <= 6 and self.guess!= None):
                     self.typeWord()
                 
                 self.determineVictory()
-
-        print(len(self.allowedGuesses))
 
     def determineVictory(self):
         if(self.guess == self.answer):
@@ -153,6 +112,48 @@ class WordleSolver:
             self.canvas.create_text(board_width / 2,  board_height - 130, font="cmr 20 bold", fill='white', text=f'answer: {self.answer.upper()}')
             self.canvas.create_text(board_width / 2,  board_height / 12 + 35, font="cmr 20 bold", fill='red', text='DEFEAT')
     
+    def assistMode(self):
+        for i, char in enumerate(self.guess):
+            if(self.currentWord[i][1] %3 == 2):
+                self.correctSpots.append((char,i))
+                for k, word in enumerate(self.allowedGuesses):
+                    if(word[i] != char):
+                        self.deleteList.append(k)
+            elif(self.currentWord[i][1] %3 == 1):
+                self.wrongSpots.append((char,i))
+                for j, word in enumerate(self.allowedGuesses):
+                    if(char not in word or (char in word and word[i]==char)):
+                        self.deleteList.append(j)
+            else:
+                for j, word in enumerate(self.allowedGuesses):
+                    if(char in word):
+                        self.deleteList.append(j)
+        self.deleteWords()
+        num = self.predict()
+        self.guess = self.allowedGuesses[num]
+        self.deleteList.append(num)
+    
+    def computerMode(self):
+        num = self.predict()
+        self.guess = self.allowedGuesses[num]
+        self.deleteList.append(num)
+        for i, char in enumerate(self.guess):
+            if(char in self.answer):
+                if(char == self.answer[i]):
+                    self.correctSpots.append((char,i))
+                    for k, word in enumerate(self.allowedGuesses):
+                        if(word[i] != char):
+                            self.deleteList.append(k)
+                else:
+                    self.wrongSpots.append((char,i))
+                    for j, word in enumerate(self.allowedGuesses):
+                        if(char not in word or (char in word and word[i]==char)):
+                            self.deleteList.append(j)
+            else:
+                for j, word in enumerate(self.allowedGuesses):
+                    if(char in word):
+                        self.deleteList.append(j)
+        self.deleteWords()
 
     def change_color(self, *args):
         x = (args[0].x - 415) // 75
@@ -174,7 +175,7 @@ class WordleSolver:
             elif((char,i) in self.wrongSpots):
                 self.currentWord.append([self.canvas.create_rectangle(board_width / 2 - 187.5 + (i*75), board_height / 12 + (self.guess_count*75), board_width / 2 - 187.5 + (i*75)+75 - 1, board_height / 12 + (self.guess_count*75)+75 - 1,  fill="yellow", tags = f"curWord{i}"), 1])
             else:
-                self.currentWord.append([self.canvas.create_rectangle(board_width / 2 - 187.5 + (i*75), board_height / 12 + (self.guess_count*75), board_width / 2 - 187.5 + (i*75)+75 - 1, board_height / 12 + (self.guess_count*75)+75 - 1,  fill="white", tags = f"curWord{i}"), 0]) 
+                self.currentWord.append([self.canvas.create_rectangle(board_width / 2 - 187.5 + (i*75), board_height / 12 + (self.guess_count*75), board_width / 2 - 187.5 + (i*75)+75 - 1, board_height / 12 + (self.guess_count*75)+75 - 1,  fill="gray", tags = f"curWord{i}"), 0]) 
             self.canvas.create_text(board_width / 2 - 150 + (i*75), board_height / 12 + 35 + (self.guess_count*75), font="cmr 30 bold", fill='black', text=char.upper(), tags = f"curWord{i}")
             self.canvas.tag_bind(f"curWord{i}","<Button-1>",self.change_color) 
 
