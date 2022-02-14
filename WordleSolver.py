@@ -161,7 +161,7 @@ class WordleSolver:
         if(y == self.guess_count and self.is_on == True):
             self.currentWord[x][1] += 1
             if(self.currentWord[x][1] % 3 == 0):
-                self.canvas.itemconfig(self.currentWord[x][0], fill='white')
+                self.canvas.itemconfig(self.currentWord[x][0], fill='gray')
             elif(self.currentWord[x][1] % 3 == 1):
                 self.canvas.itemconfig(self.currentWord[x][0], fill='yellow')
             else:
