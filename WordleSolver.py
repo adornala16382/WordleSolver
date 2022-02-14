@@ -12,7 +12,16 @@ f.close()
 all_words = wordList['answers']['possibleAnswers']
 board_width = 1200
 board_height = 750
+frequencyList = {}
 
+def makeFrequencyList(filename):
+    file = open(filename)
+    lines = file.readlines()
+    for line in lines:
+        split = line.split('|')
+        frequencyList[split[0]] = float(split[1])
+
+makeFrequencyList('letterFrequency.txt')
 
 class WordleSolver:
 
@@ -22,22 +31,30 @@ class WordleSolver:
     correctSpots = []
     wrongSpots = []
 
-    def __init__(self):
+    def __init__(self, hardCodedAnswer, runStatistics):
         self.window = tk.Tk()
         self.window.title("Wordle Solver")
         self.canvas = Canvas(self.window, width=board_width, height=board_height, bg = '#222222')
         self.on = PhotoImage(file = "on.png")
         self.off = PhotoImage(file = "off.png")
         self.canvas.pack()
-        self.restart()
-        print("answer: "+self.answer)
+        self.hardCodedAnswer = hardCodedAnswer
+        self.runStatistics = runStatistics
+        if(self.runStatistics == True):
+            self.statistics()
+        else:
+            self.restart()
     
     def restart(self):
         self.allowedGuesses = all_words.copy()
         self.guess = ""
         self.guess_count = 0
         self.is_on = False
-        self.answer = all_words[random.randint(0,len(all_words) - 1)]
+        self.victory = False
+        if(self.hardCodedAnswer != None):
+            self.answer = self.hardCodedAnswer
+        else:
+            self.answer = all_words[random.randint(0,len(all_words) - 1)]
         self.correctSpots = []
         self.wrongSpots = []
         self.deleteList = []
@@ -56,8 +73,9 @@ class WordleSolver:
         self.on_button = Button(self.window, image = self.off, command = self.switch)
         self.canvas.create_window(board_width/2 + 140, board_height - 65, anchor='nw', window=self.on_button)
         self.canvas.create_text(board_width/2 + 200, board_height - 95, font="cmr 10 bold", fill='white', text="Turn on in beginning\nof game to assist solving\nan external Wordle game")
-    
         self.createGrid()
+        if(self.runStatistics == False):
+            print("answer: "+self.answer)
 
     def createGrid(self):
         self.canvas.create_rectangle(board_width / 2 - 187.5, board_height / 12 + (75), board_width / 2 - 187.5 + (5*75), board_height / 12 + (7 *75),  fill="white")
@@ -90,7 +108,7 @@ class WordleSolver:
           
         self.deleteList = []
         if(len(self.allowedGuesses) >= 1):
-            if(self.guess_count <= 6):
+            if(self.guess_count <= 5 and self.victory==False):
 
                 self.guess_count+= 1
 
@@ -108,9 +126,13 @@ class WordleSolver:
         if(self.guess == self.answer):
             self.canvas.create_text(board_width / 2,  board_height / 12 + 35, font="cmr 20 bold", fill='green', text='VICTORY')
             self.canvas.create_text(board_width / 2,  board_height - 130, font="cmr 20 bold", fill='white', text=f'answer: {self.answer.upper()}')
+            self.victory = True
         elif(self.guess_count == 6 and self.guess!=None):
             self.canvas.create_text(board_width / 2,  board_height - 130, font="cmr 20 bold", fill='white', text=f'answer: {self.answer.upper()}')
             self.canvas.create_text(board_width / 2,  board_height / 12 + 35, font="cmr 20 bold", fill='red', text='DEFEAT')
+            self.victory = False
+            self.guess_count = 7
+
     
     def assistMode(self):
         for i, char in enumerate(self.guess):
@@ -196,7 +218,7 @@ class WordleSolver:
                 for char in word:
                     if(char not in map):
                         map.add(char)
-                        length += 1
+                        length += frequencyList[char.upper()]
                         if(length > max_len):
                             max_len = length
                             max_index = index
@@ -206,12 +228,23 @@ class WordleSolver:
             num = random.randint(0,len(self.allowedGuesses)-1)
             return num
 
+    def statistics(self):
+        scoreSum = 0
+        for i in range(len(all_words)):      
+            self.restart()
+            self.answer = all_words[i]
+            for j in range(6):
+                self.guessWord()
+            scoreSum += self.guess_count
+            print(self.answer + ": " + str(self.guess_count))
+        
+        print("avg score: "+str(scoreSum/len(all_words)))
+
                 
     def run(self):
         self.window.mainloop()
 
 
 if __name__ == "__main__":
-    game_instance = WordleSolver()
+    game_instance = WordleSolver(hardCodedAnswer = None, runStatistics = True)
     game_instance.run()
-
